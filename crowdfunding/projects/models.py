@@ -168,3 +168,45 @@ class Animals(models.Model):
 
     def get_absolute_url(self):
         return reverse('animal-detail', args=(self.pk,))
+
+class Foster(models.Model):
+    user = models.OneToOneField(get_user_model(),
+        on_delete=models.CASCADE,
+        related_name="Foster",
+        null=True)
+    name = models.CharField(max_length=200)  # animal name
+    start_date = models.DateTimeField('starting date')
+    end_date = models.DateTimeField('ending date')
+    comment = models.CharField(max_length=200)
+    done = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
+class Adopt(models.Model):
+    user = models.OneToOneField(get_user_model(),
+        on_delete=models.CASCADE,
+        related_name="Adopt",
+        null=True)
+    name = models.CharField(max_length=200)  # animal name
+    start_date = models.DateTimeField('starting date')
+    end_date = models.DateTimeField('ending date')
+    comment = models.CharField(max_length=200)
+    done = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
+class Support(models.Model):
+    user = models.OneToOneField(get_user_model(),
+        on_delete=models.CASCADE,
+        related_name="Support",
+        null=True)
+    name = models.CharField(max_length=200)  # animal name
+    start_date = models.DateTimeField('starting date')
+    end_date = models.DateTimeField('ending date')
+    comment = models.CharField(max_length=200)
+    done = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
