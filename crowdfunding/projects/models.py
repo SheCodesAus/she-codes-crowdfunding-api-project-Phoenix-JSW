@@ -5,6 +5,11 @@ from django.conf import global_settings, settings
 from django.contrib.auth import get_user_model
 from django.forms import CharField, SlugField
 from django.utils.timezone import now
+from django.urls import reverse, reverse_lazy
+from django.utils.timezone import datetime, now
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils.text import slugify
+
 #from users.models import Association
 
 user = get_user_model()
@@ -132,3 +137,34 @@ class AnimalStatus(models.Model):
 class Meta:
     verbose_name = 'Animal Status'
     verbose_name_plural = 'Animal Statuses'
+
+class Animals(models.Model):
+    animal_species = models.ForeignKey(AnimalSpecies, on_delete=models. PROTECT, verbose_name="Animal Species")
+    animal_breed = models.ForeignKey(AnimalBreed, on_delete=models. PROTECT, verbose_name="Animal Breed")
+    animal_gender = models. ForeignKey(AnimalGender, on_delete=models. PROTECT, verbose_name="Animal Gender")
+    image = models.URLField()
+    bio = models.TextField("bio", max_length=500, help_text="Describe the Animals Personality")
+    difficulty = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    animal_name = models.CharField("Name", max_length=50)
+    age = models. PositiveSmallIntegerField("Full Years")
+    color = models.TextField("Color", max_length=500,help_text="Describe a Color")
+    bonded = models.BooleanField()
+    slug = models.SlugField(max_length=255, unique=True)
+    desexed = models.BooleanField()
+    is_sheltered = models.BooleanField()
+    is_fostered = models.BooleanField()
+    is_adopted = models.BooleanField()
+    adopt = models.BooleanField()
+    foster = models.BooleanField()
+    support = models.BooleanField()
+    goal = models.IntegerField()
+    is_published = models.BooleanField(default=False)
+
+
+    @property
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('animal-detail', args=(self.pk,))
