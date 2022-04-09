@@ -81,8 +81,6 @@ class Pledge(models.Model):
         related_name='supporter_pledges'
     )
 
-
-
 class Favourite(models.Model):
     owner = models.ForeignKey(
         get_user_model(),
