@@ -3,6 +3,8 @@ from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 class CustomUser(AbstractUser):
-    pass
+    bio = models.TextField(null=True)
+    applicant = models.BooleanField(max_length=200, blank=True, null=True)
+        
     def __str__(self):
         return self.username

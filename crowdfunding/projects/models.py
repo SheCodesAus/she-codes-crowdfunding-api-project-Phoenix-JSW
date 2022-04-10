@@ -10,7 +10,7 @@ from django.utils.timezone import datetime, now
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.text import slugify
 
-#from users.models import Association
+# from users.models import Applicant
 
 user = get_user_model()
 
@@ -32,23 +32,6 @@ class Category(models.Model):
     def tot_donated(self):
         query = self.project_pledges.all()
         return sum(pledge.amount for pledge in query)
-    
-
-class Project(models.Model):
-    title = models.CharField(max_length=200)
-    description = models.TextField(null=True)
-    goal = models.IntegerField()
-    image = models.URLField(null=True)
-    is_open = models.BooleanField()
-    date_created = models.DateTimeField(auto_now=True, blank=True)
-    deadline = models.DateTimeField(null=True)
-    owner = models.CharField(max_length=200)
-    category = models.ForeignKey(
-        Category,
-        on_delete=models.CASCADE,
-        related_name='projects',
-        null=True
-    )
 
 class Comments(BaseModel):
     project = models.ForeignKey(
@@ -64,7 +47,22 @@ class Comments(BaseModel):
         on_delete=models.CASCADE,
         related_name='comments'
     )
-
+    
+class Project(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField(null=True)
+    goal = models.IntegerField()
+    image = models.URLField(null=True)
+    is_open = models.BooleanField()
+    date_created = models.DateTimeField(auto_now=True, blank=True)
+    end_date = models.DateTimeField(null=True)
+    owner = models.CharField(max_length=200)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        related_name='projects',
+        null=True
+    )
 
 class Pledge(models.Model):
     amount = models.IntegerField()
