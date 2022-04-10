@@ -1,12 +1,12 @@
 import string
 import random
+from datetime import datetime, timedelta
 from django.db import models
 from django.conf import global_settings, settings
 from django.contrib.auth import get_user_model
 from django.forms import CharField, SlugField
 from django.utils.timezone import now
 from django.urls import reverse, reverse_lazy
-from django.utils.timezone import datetime, now
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.text import slugify
 
@@ -28,11 +28,6 @@ class Category(models.Model):
     name = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(unique=True)
 
-    @property
-    def tot_donated(self):
-        query = self.project_pledges.all()
-        return sum(pledge.amount for pledge in query)
-
 class Comments(BaseModel):
     project = models.ForeignKey(
         'Project',
@@ -47,7 +42,7 @@ class Comments(BaseModel):
         on_delete=models.CASCADE,
         related_name='comments'
     )
-    
+
 class Project(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(null=True)
@@ -63,6 +58,21 @@ class Project(models.Model):
         related_name='projects',
         null=True
     )
+    favourites = models.ManyToManyField(
+    settings.AUTH_USER_MODEL, related_name='project_favourites',
+    through='Favourite'
+    )
+
+    @property
+    def is_open(self):
+        if self.pub_date is None:
+            return False
+        return (self.pub_date + timedelta(self.duration)) > now()
+    
+    @property
+    def tot_donated(self):
+        query = self.project_pledges.all()
+        return sum(pledge.amount for pledge in query)
 
 class Pledge(models.Model):
     amount = models.IntegerField()
@@ -78,22 +88,6 @@ class Pledge(models.Model):
         on_delete=models.CASCADE,
         related_name='supporter_pledges'
     )
-
-class Favourite(models.Model):
-    owner = models.ForeignKey(
-        get_user_model(),
-        on_delete = models.CASCADE,
-        related_name = 'owner_favourites',
-    )
-    project = models.ForeignKey(
-        Project,
-        on_delete = models.CASCADE,
-        related_name = 'projects_favourites'
-    )
-    date_added = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('owner', 'project')
 
 class AnimalSpecies(models.Model):
     value = models.CharField("Value", max_length=100,unique=True, null=False)
@@ -155,8 +149,14 @@ class Animals(models.Model):
     support = models.BooleanField()
     goal = models.IntegerField()
     is_published = models.BooleanField(default=False)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        related_name='animals',
+        null=True
+    )
 
-
+    
     @property
 
     def __str__(self):
@@ -206,3 +206,19 @@ class Support(models.Model):
 
     def __str__(self):
         return self.name
+
+class Favourite(models.Model):
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete = models.CASCADE,
+        related_name = 'owner_favourites',
+    )
+    project = models.ForeignKey(
+        Project,
+        on_delete = models.CASCADE,
+        related_name = 'project_favourites'
+    )
+    date_added = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('owner', 'project')

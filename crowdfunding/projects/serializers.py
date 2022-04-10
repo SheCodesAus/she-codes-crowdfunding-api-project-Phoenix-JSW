@@ -1,19 +1,19 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Project, Pledge, Comments, Category
+from .models import Animals, Project, Pledge, Comments, Category, Favourite
 
 User = get_user_model()
 
 class CommentsSerializer(serializers.ModelSerializer):
-
+    author = serializers.SlugRelatedField(
+        slug_field="username",
+        read_only="true",
+    )
     class Meta:
         model = Comments
-        exclude = ['visible']
+        exclude = ['visible', "project"]
 
-class CategorySerializer(serializers.Serializer):
-    id = serializers.ReadOnlyField()
-    name = serializers.CharField(max_length=200)
-    slug = serializers.SlugField()
+
 
 class PledgeSerializer(serializers.Serializer):
     id = serializers.ReadOnlyField()
@@ -51,6 +51,7 @@ class ProjectSerializer(serializers.Serializer):
 
 class ProjectDetailSerializer(ProjectSerializer):
     pledges = PledgeSerializer(many=True, read_only=True)
+    comments = CommentsSerializer(many=True, read_only=True)
 
     def update(self, instance, validated_data):
         instance.title = validated_data.get('title', instance.title)
@@ -65,4 +66,21 @@ class ProjectDetailSerializer(ProjectSerializer):
         instance.category = validated_data.get('category', instance.category)
         instance.save()
         return instance
+
+class FavouriteSerializer(serializers.ModelSerializer):
+    """ used by FavouriteListView """
+    date = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Favourite
+        fields = '__all__'
+        read_only_fields = ('owner',)
+
+class CategorySerializer(serializers.Serializer):
+    id = serializers.ReadOnlyField()
+    name = serializers.CharField(max_length=200)
+    slug = serializers.SlugField()
+
+class CategoryDetailSerializer(CategorySerializer):
+    Project = ProjectSerializer(many=True, read_only=True)
 

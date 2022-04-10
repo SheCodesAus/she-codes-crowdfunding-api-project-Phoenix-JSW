@@ -3,12 +3,23 @@ from rest_framework.response import Response
 from .models import Project
 from django.http import Http404
 from rest_framework import status, permissions, generics
-from .models import Project, Pledge, Category, Comments
-from .serializers import ProjectSerializer, PledgeSerializer, ProjectDetailSerializer, CategorySerializer, CommentsSerializer
+from .models import Project, Pledge, Category, Comments, Favourite
+from .serializers import (
+    CommentsSerializer,
+    CategoryDetailSerializer,
+    CategorySerializer,
+    PledgeSerializer,
+    ProjectSerializer, 
+    ProjectDetailSerializer, 
+    FavouriteSerializer)
 from .permissions import IsOwnerOrReadOnly, IsAuthorOrReadOnly
 
 # Create your views here.
 class CategoryDetail(APIView):
+    """ url: categories/<str:name>/"""
+    queryset = Category.objects.all()
+    serializer_class = CategoryDetailSerializer
+    lookup_field = 'name'
     
     def get_object(self, **kwargs):
         try:
@@ -108,6 +119,32 @@ class ProjectDetail(APIView):
         else:
             return Response(serializer.errors)
 
+class FavouriteListView(generics.ListCreateAPIView):
+    """ 
+    shows favourites of request user
+    if favourite exists, remove, or create
+    url: favourites 
+    """
+    serializer_class = FavouriteSerializer
+    permission_classes = [IsOwnerOrReadOnly]
+
+    def get_queryset(self):
+        """
+       returns list of all favourites for current authenticated user.
+        """
+        user = self.request.user
+        return Favourite.objects.filter(owner=user)
+
+    def perform_create(self, serializer):
+        print(serializer.validated_data)
+        serializer.is_valid()
+        data = serializer.validated_data
+        project = data.get('project')
+        user = self.request.user
+        if project.favourites.filter(id=user.id).exists():
+            project.favourites.remove(user)
+        else:
+            project.favourites.add(user)
 
 
 
