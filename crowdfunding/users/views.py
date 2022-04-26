@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics, permissions
 from .models import CustomUser
+from .permissions import IsOwnerOrReadOnly, IsAuthorOrReadOnly
 from .serializers import CustomUserSerializer, RegisterSerializer
 
 # Create your views here.
@@ -19,10 +20,14 @@ class CustomUserList(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-            return Response(serializer.errors)
+        return Response(serializer.errors)
 
 
 class CustomUserDetail(APIView):
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly,
+        IsOwnerOrReadOnly
+    ]
 
     def get_object(self, pk):
           try:

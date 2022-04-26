@@ -1,10 +1,11 @@
 import string
 import random
 from datetime import datetime, timedelta
+from tkinter.tix import STATUS
 from django.db import models
 from django.conf import global_settings, settings
 from django.contrib.auth import get_user_model
-from django.forms import CharField, SlugField
+from django.forms import CharField, SlugField, TimeField
 from django.utils.timezone import now
 from django.urls import reverse, reverse_lazy
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -23,6 +24,16 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+
+class AnimalStatusTag(models.Model):
+    value = models.CharField("Value", max_length=200)
+
+    def __str__(self):
+        return str(self.value)
+	
+class Meta:
+    verbose_name = 'Statustag'
+    verbose_name_plural = 'Statustag'
 
 class Category(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -62,6 +73,17 @@ class Project(models.Model):
     settings.AUTH_USER_MODEL, related_name='project_favourites',
     through='Favourite'
     )
+    animals = models.ForeignKey(
+        "Animals",
+        on_delete=models.CASCADE,
+        related_name='animals',
+        null=True
+    )
+    status = models.ManyToManyField(
+        AnimalStatusTag,
+        related_name = "project",
+        related_query_name = "Projects"
+    )
 
     @property
     def is_open(self):
@@ -82,7 +104,6 @@ class Pledge(models.Model):
         on_delete=models.CASCADE,
         related_name='pledges'
     )
-    # supporter = models.CharField(max_length=200)
     supporter = models.ForeignKey(
         get_user_model(),
         on_delete=models.CASCADE,
@@ -106,38 +127,31 @@ class AnimalBreed(models.Model):
         return str(self.value)
 
     class Meta:
-        verbose_name = 'Breed of the Animal'
+        verbose_name = 'Animal Breed'
         verbose_name_plural = 'Animal Breeds'
 
 class AnimalGender(models.Model):
-    value = models.CharField("Value", max_length=20,unique=True, null=False)
+    value = models.CharField("Value", max_length=20, unique=True, null=False)
 
     def __str__(self):
         return str(self.value)
 
     class Meta:
-        verbose_name = 'Gender of the Animal'
+        verbose_name = 'Animal Gender'
         verbose_name_plural = 'Animal Gender'
 
-class AnimalStatus(models.Model):
-    value = models.CharField("Value", max_length=100,unique=True, null=False)
-    def __str__(self):
-        return str(self.value)
-	
-class Meta:
-    verbose_name = 'Animal Status'
-    verbose_name_plural = 'Animal Statuses'
+
 
 class Animals(models.Model):
+    image = models.URLField()
+    animal_name = models.CharField("Name", max_length=50)
     animal_species = models.ForeignKey(AnimalSpecies, on_delete=models. PROTECT, verbose_name="Animal Species")
     animal_breed = models.ForeignKey(AnimalBreed, on_delete=models. PROTECT, verbose_name="Animal Breed")
-    animal_gender = models. ForeignKey(AnimalGender, on_delete=models. PROTECT, verbose_name="Animal Gender")
-    image = models.URLField()
-    bio = models.TextField("bio", max_length=500, help_text="Describe the Animals Personality")
+    animal_gender = models.ForeignKey(AnimalGender, on_delete=models. PROTECT, verbose_name="Animal Gender")
+    color = models.CharField("Color", max_length=500,help_text="Describe a Color")
+    description = models.TextField("description", max_length=1000, help_text="Describe the Animals Personality", null=True)
     difficulty = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
-    animal_name = models.CharField("Name", max_length=50)
     age = models. PositiveSmallIntegerField("Full Years")
-    color = models.TextField("Color", max_length=500,help_text="Describe a Color")
     bonded = models.BooleanField()
     slug = models.SlugField(max_length=255, unique=True)
     desexed = models.BooleanField()
@@ -155,8 +169,12 @@ class Animals(models.Model):
         related_name='animals',
         null=True
     )
+    status = models.ManyToManyField(
+        AnimalStatusTag,
+        related_name = "animals",
+        related_query_name = "animal"
+    )
 
-    
     @property
 
     def __str__(self):
@@ -219,6 +237,7 @@ class Favourite(models.Model):
         related_name = 'project_favourites'
     )
     date_added = models.DateTimeField(auto_now_add=True)
+    
 
     class Meta:
         unique_together = ('owner', 'project')

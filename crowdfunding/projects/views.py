@@ -1,10 +1,16 @@
+from pdb import post_mortem
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Project
+
+from .models import AnimalBreed, AnimalGender, AnimalSpecies,  Project
 from django.http import Http404
-from rest_framework import status, permissions, generics
-from .models import Project, Pledge, Category, Comments, Favourite
+from rest_framework import status, permissions, generics, filters, status
+from .models import Project, Pledge, Category, Comments, Favourite, Animals, AnimalBreed, AnimalGender,  AnimalSpecies
 from .serializers import (
+    AnimalBreedSerializer,
+    AnimalGenderSerializer,
+    AnimalSpeciesSerializer,
+    AnimalsSerializer,
     CommentsSerializer,
     CategoryDetailSerializer,
     CategorySerializer,
@@ -13,37 +19,14 @@ from .serializers import (
     ProjectDetailSerializer, 
     FavouriteSerializer)
 from .permissions import IsOwnerOrReadOnly, IsAuthorOrReadOnly
+from rest_framework.permissions import AllowAny, IsAdminUser
 
 # Create your views here.
-class CategoryDetail(APIView):
-    """ url: categories/<str:name>/"""
-    queryset = Category.objects.all()
-    serializer_class = CategoryDetailSerializer
-    lookup_field = 'name'
-    
-    def get_object(self, **kwargs):
-        try:
-            if "slug" in kwargs:
-                return Category.objects.get(slug=kwargs["slug"])
-            return Category.objects.get(pk=kwargs["pk"])
-        except Category.DoesNotExist:
-            raise Http404
-    
-    def get(self, request, **kwargs):
-        category = self.get_object(**kwargs)
-        serializer = CategorySerializer(category)
-        return Response(serializer.data)
+def get_shared_permissions(action):
+    return [AllowAny()] if action == 'retrieve' or action == 'list' else [IsAdminUser()]
 
-class CommentListApi(generics.ListCreateAPIView):
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    queryset = Comments.objects.filter(visible=True)
-    serializer_class = CommentsSerializer
 
-class CommentDetailApi(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
-    queryset = Comments.objects.filter(visible=True)
-    serializer_class = CommentsSerializer
-
+# Projects & Pledges
 class PledgeList(APIView):    
 
     def get(self, request):
@@ -119,6 +102,116 @@ class ProjectDetail(APIView):
         else:
             return Response(serializer.errors)
 
+# Animals
+class AnimalsList(APIView):
+    # Create Animal, get list of animals
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    def get(self, request):
+        animals = animals.objects.all()
+        serializer = AnimalsSerializer(animals, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = AnimalsSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(owner=request.user)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+class AnimalsDetail(APIView):
+    # Get details of a single animals, update animals details
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
+        IsOwnerOrReadOnly
+    ]
+
+    def get_object(self, pk):
+        try:
+            return animals.objects.get(pk=pk)
+        except animals.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        animals = self.get_object(pk)
+        serializer = AnimalsDetailSerializer(animals)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        animals = self.get_object(pk)
+        data = request.data
+        serializer = AnimalsDetailSerializer(
+            instance=animals,
+            data=data,
+            partial=True
+            )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+        def delete(self, request, pk):
+            animals = self.get_object(pk)
+            animals.delete()
+            return Response(
+                "Deleted",
+                status = status.HTTP_204_NO_CONTENT
+        )
+
+class AnimalSpeciesView(generics.ListCreateAPIView):
+    queryset = AnimalSpecies.objects.all()
+    serializer_class = AnimalSpeciesSerializer
+
+    def get_permissions(self):
+        return get_shared_permissions(self.action)
+
+
+class AnimalGenderView(generics.ListCreateAPIView):
+    queryset = AnimalGender.objects.all()
+    serializer_class = AnimalGenderSerializer
+
+    def get_permissions(self):
+        return get_shared_permissions(self.action)
+
+
+class AnimalBreedView(generics.ListCreateAPIView):
+    queryset = AnimalBreed.objects.all()
+    serializer_class = AnimalBreedSerializer
+
+    def get_permissions(self):
+        return get_shared_permissions(self.action)
+
+
+
+class CategoryDetail(APIView):
+    """ url: categories/<str:name>/"""
+    queryset = Category.objects.all()
+    serializer_class = CategoryDetailSerializer
+    lookup_field = 'name'
+    
+    def get_object(self, **kwargs):
+        try:
+            if "slug" in kwargs:
+                return Category.objects.get(slug=kwargs["slug"])
+            return Category.objects.get(pk=kwargs["pk"])
+        except Category.DoesNotExist:
+            raise Http404
+    
+    def get(self, request, **kwargs):
+        category = self.get_object(**kwargs)
+        serializer = CategorySerializer(category)
+        return Response(serializer.data)  
+
 class FavouriteListView(generics.ListCreateAPIView):
     """ 
     shows favourites of request user
@@ -146,8 +239,42 @@ class FavouriteListView(generics.ListCreateAPIView):
         else:
             project.favourites.add(user)
 
+class FavouriteView(APIView):
+    """
+    Favourite projects of (request.user)(url has id of project) 
+    If requested favourite doesn't exist, it's'created, otherwise it's removed
+    """
 
+    def get_object(self, pk):
+        try:
+            return Project.objects.get(pk=pk)
+        except Project.DoesNotExist:
+            raise Http404
 
+    def get(self, request, pk):
+        favourite = False
+        project = self.get_object(pk)
+        user = request.user
+        if project.favourites.filter(id=user.id).exists():
+            favourite = True
+        return Response(f"{project},{user},{favourite}")
 
-        
+    def post(self, request, pk):
+        project = self.get_object(pk)
+        if project.favourite.filter(id=request.user.id).exists():
+            project.favourite.remove(request.user)
+            Favourite = False
+        else:
+            post.favourite.add(request.user)
+            favourite = True
+
+class CommentListApi(generics.ListCreateAPIView):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    queryset = Comments.objects.filter(visible=True)
+    serializer_class = CommentsSerializer
+
+class CommentDetailApi(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
+    queryset = Comments.objects.filter(visible=True)
+    serializer_class = CommentsSerializer      
 

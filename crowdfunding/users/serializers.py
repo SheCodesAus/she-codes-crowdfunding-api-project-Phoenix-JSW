@@ -26,7 +26,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name')
+        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name', 'bio', 'applicant')
         extra_kwargs = {
             'first_name': {'required': True},
             'last_name': {'required': True}
@@ -49,3 +49,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
 
         return user
+
+class CustomUserDetailSerializer(CustomUserSerializer):
+    
+    def update(self, instance, validated_data):
+        instance.bio = validated_data.get('bio', instance.bio)
+        instance.applicant=validated_data.get('applicant', instance.applicant)
+        instance.save()
+        return instance

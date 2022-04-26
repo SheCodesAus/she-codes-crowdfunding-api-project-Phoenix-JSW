@@ -1,6 +1,9 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Animals, Project, Pledge, Comments, Category, Favourite
+from rest_framework.exceptions import ValidationError
+from rest_framework.validators import UniqueValidator
+from rest_framework.serializers import ModelSerializer, CharField, PrimaryKeyRelatedField, IntegerField, URLField 
+from .models import *
 
 User = get_user_model()
 
@@ -12,8 +15,6 @@ class CommentsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comments
         exclude = ['visible', "project"]
-
-
 
 class PledgeSerializer(serializers.Serializer):
     id = serializers.ReadOnlyField()
@@ -43,10 +44,19 @@ class ProjectSerializer(serializers.Serializer):
     # pledges = PledgeSerializer(many=True, read_only=True)
     end_date = serializers.DateTimeField()
     category = serializers.SlugRelatedField(slug_field="slug", queryset=Category.objects.all())
-    applicant = serializers.ReadOnlyField(source='applicant.id')
+    animals = serializers.ReadOnlyField(source='owner.animals.name')
+    animals_id = serializers.ReadOnlyField(source='owner.animals.id')
+    is_approved = serializers.ReadOnlyField(source='owner.animals.is_approved')
+    status = serializers.SlugRelatedField(many=True, slug_field="animalstatus", queryset=AnimalStatusTag.objects.all())
+    pledges = PledgeSerializer(many=True, read_only=True)
 
     def create(self, validated_data):
-        return Project.objects.create(**validated_data)
+        status = validated_data.pop('status')
+        project = Project.objects.create(**validated_data)
+        project.status.set(status)
+        project.save()
+        return project
+
 
 
 class ProjectDetailSerializer(ProjectSerializer):
@@ -84,3 +94,68 @@ class CategorySerializer(serializers.Serializer):
 class CategoryDetailSerializer(CategorySerializer):
     Project = ProjectSerializer(many=True, read_only=True)
 
+class AnimalSpeciesSerializer(ModelSerializer):
+    value = CharField(max_length=100, required=True, validators=[
+        UniqueValidator(queryset=AnimalSpecies.objects.all())])
+
+    class Meta:
+        model = AnimalSpecies
+        fields = ['id', 'value']
+
+class AnimalBreedSerializer(ModelSerializer):
+    value = CharField(max_length=100, required=True, validators=[
+        UniqueValidator(queryset=AnimalBreed.objects.all())])
+
+    class Meta:
+        model = AnimalBreed
+        fields = ['id', 'value']
+
+class AnimalGenderSerializer(ModelSerializer):
+    value = CharField(max_length=100, required=True,  validators=[
+        UniqueValidator(queryset=AnimalGender.objects.all())])
+
+    class Meta:
+        model = AnimalGender
+        fields = ['id', 'value']
+
+
+class AnimalsSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField()
+    animal_name = CharField(max_length=50, required=True)
+    age = IntegerField(min_value=0, required=True)
+    animal_Species = AnimalSpeciesSerializer(read_only=True)
+    animal_Species_id = PrimaryKeyRelatedField(
+        source='animal_species', queryset=AnimalSpecies.objects.all(), required=True, write_only=True)
+    animal_breed = AnimalBreedSerializer(read_only=True)
+    animal_breed_id = PrimaryKeyRelatedField(
+        source='animal_breed', queryset=AnimalBreed.objects.all(), required=True, write_only=True)
+    animal_gender = AnimalGenderSerializer(read_only=True)
+    animal_gender_id = PrimaryKeyRelatedField(
+        source='animal_gender', queryset=AnimalGender.objects.all(), required=True, write_only=True)
+    color = CharField(max_length=500, required=True)
+    difficulty = IntegerField(min_value=0, required=True)
+    description = CharField(max_length=1000, required=True)
+    image = URLField()
+    status = serializers.SlugRelatedField(many=True, slug_field="animalstatus", queryset=AnimalStatusTag.objects.all())
+    def create(self, validated_data):
+        status = validated_data.pop('status')
+        Animals = Animals.objects.create(**validated_data)
+        Animals.species.set(status)
+        Animals.save()
+        return Animals
+
+    def validate(self, attrs):
+        if 'request' in self.context:
+            request = self.context['request']
+
+            if len(request.FILES.getlist('images')) > 6:
+                return ValidationError('Maximum number of attached images is 6')
+
+        return super().validate(attrs)
+
+class AnimalStatusTagSerializer(serializers.Serializer):
+    id = serializers.ReadOnlyField()
+    value = serializers.CharField(max_length=200)
+
+    def create(self, validated_data):
+        return AnimalStatusTag.objects.create(**validated_data)
