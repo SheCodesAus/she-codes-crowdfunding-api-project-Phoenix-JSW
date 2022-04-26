@@ -1,25 +1,28 @@
 from pdb import post_mortem
 from rest_framework.views import APIView
 from rest_framework.response import Response
-
+from django.contrib.auth import get_user_model
 from .models import AnimalBreed, AnimalGender, AnimalSpecies,  Project
 from django.http import Http404
 from rest_framework import status, permissions, generics, filters, status
-from .models import Project, Pledge, Category, Comments, Favourite, Animals, AnimalBreed, AnimalGender,  AnimalSpecies
+from .models import Project, Pledge, Category, Comments, Favourite, Animals, AnimalBreed, AnimalGender,  AnimalSpecies, AnimalStatusTag
 from .serializers import (
     AnimalBreedSerializer,
     AnimalGenderSerializer,
     AnimalSpeciesSerializer,
     AnimalsSerializer,
+    AnimalsDetailSerializer,
     CommentsSerializer,
     CategoryDetailSerializer,
     CategorySerializer,
     PledgeSerializer,
     ProjectSerializer, 
     ProjectDetailSerializer, 
-    FavouriteSerializer)
+    FavouriteSerializer,
+    AnimalStatusTagSerializer)
 from .permissions import IsOwnerOrReadOnly, IsAuthorOrReadOnly
 from rest_framework.permissions import AllowAny, IsAdminUser
+from users.models import CustomUser
 
 # Create your views here.
 def get_shared_permissions(action):
@@ -46,6 +49,15 @@ class PledgeList(APIView):
                 serializer.errors,
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+class UsersPledges(generics.ListAPIView):
+    # Get list of pledges that the current user has made
+    serializer_class = PledgeSerializer
+
+    def get_queryset(self):
+        pk = self.kwargs['pk']
+        user = CustomUser.objects.get(pk=pk)
+        return Pledge.objects.filter(supporter=user)
 
 class ProjectList(APIView):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
@@ -98,9 +110,22 @@ class ProjectDetail(APIView):
         )
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    def delete(self, request, pk):
+        project = self.get_object(pk)
+        project.delete()
+        return Response(
+            "Deleted",
+            status = status.HTTP_204_NO_CONTENT
+        )
 
 # Animals
 class AnimalsList(APIView):
@@ -132,8 +157,8 @@ class AnimalsDetail(APIView):
 
     def get_object(self, pk):
         try:
-            return animals.objects.get(pk=pk)
-        except animals.DoesNotExist:
+            return Animals.objects.get(pk=pk)
+        except Animals.DoesNotExist:
             raise Http404
 
     def get(self, request, pk):
@@ -168,6 +193,8 @@ class AnimalsDetail(APIView):
                 status = status.HTTP_204_NO_CONTENT
         )
 
+# Filtered Views
+
 class AnimalSpeciesView(generics.ListCreateAPIView):
     queryset = AnimalSpecies.objects.all()
     serializer_class = AnimalSpeciesSerializer
@@ -191,6 +218,28 @@ class AnimalBreedView(generics.ListCreateAPIView):
     def get_permissions(self):
         return get_shared_permissions(self.action)
 
+class AnimalStatusTag(APIView):
+    # Create pet category, return list of all categories
+    
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def post(self, request):
+        serializer = AnimalStatusTagSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    def get(self, request):
+        animals = AnimalStatusTag.objects.all()
+        serializer = AnimalStatusTagSerializer(animals, many=True)
+        return Response(serializer.data)
 
 
 class CategoryDetail(APIView):
@@ -219,7 +268,7 @@ class FavouriteListView(generics.ListCreateAPIView):
     url: favourites 
     """
     serializer_class = FavouriteSerializer
-    permission_classes = [IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         """

@@ -57,8 +57,6 @@ class ProjectSerializer(serializers.Serializer):
         project.save()
         return project
 
-
-
 class ProjectDetailSerializer(ProjectSerializer):
     pledges = PledgeSerializer(many=True, read_only=True)
     comments = CommentsSerializer(many=True, read_only=True)
@@ -71,9 +69,9 @@ class ProjectDetailSerializer(ProjectSerializer):
         instance.is_open = validated_data.get('is_open',instance.is_open)
         instance.date_created = validated_data.get('date_created',instance.date_created)
         instance.owner = validated_data.get('owner', instance.owner)
-        instance.save()
         instance.deadline = validated_data.get('end_date', instance.deadline)
         instance.category = validated_data.get('category', instance.category)
+        instance.status.set(validated_data.get('status', instance.status))
         instance.save()
         return instance
 
@@ -152,6 +150,23 @@ class AnimalsSerializer(serializers.ModelSerializer):
                 return ValidationError('Maximum number of attached images is 6')
 
         return super().validate(attrs)
+
+class AnimalsDetailSerializer(AnimalsSerializer):
+
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        instance.age = validated_data.get('age', instance.age)
+        instance.species = validated_data.get('species', instance.name)
+        instance.breed = validated_data.get('breed', instance.breed)
+        instance.gender = validated_data.get('gender', instance.gender)
+        instance.color = validated_data.get('color', instance.color)
+        instance.difficulty = validated_data.get('difficulty', instance.difficulty)       
+        instance.description = validated_data.get('description', instance.description)
+        instance.image = validated_data.get('image', instance.image)
+        instance.status.set(validated_data.get('status', instance.status))
+        instance.owner_id = validated_data.get('owner', instance.id)
+        instance.save()
+        return instance
 
 class AnimalStatusTagSerializer(serializers.Serializer):
     id = serializers.ReadOnlyField()
