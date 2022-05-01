@@ -211,8 +211,6 @@ class Adopt(models.Model):
         return self.name
 
 class Support(models.Model):
-    time = models.IntegerField()
-    donation = models.CharField(max_length=200)
     user = models.OneToOneField(get_user_model(),
         on_delete=models.CASCADE,
         related_name="Support",
@@ -222,11 +220,6 @@ class Support(models.Model):
     end_date = models.DateTimeField('ending date')
     comment = models.CharField(max_length=200)
     done = models.BooleanField(default=False)
-    project = models.ForeignKey(
-        Project,
-        on_delete = models.CASCADE,
-        related_name = 'project_support'
-    )
     def __str__(self):
         return self.name
 
