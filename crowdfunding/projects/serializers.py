@@ -39,7 +39,6 @@ class ProjectSerializer(serializers.Serializer):
     image = serializers.URLField()
     is_open = serializers.BooleanField()
     date_created = serializers.DateTimeField()
-    # owner = serializers.CharField(max_length=200)
     owner = serializers.ReadOnlyField(source='owner.id')
     # pledges = PledgeSerializer(many=True, read_only=True)
     end_date = serializers.DateTimeField()
@@ -138,7 +137,7 @@ class AnimalsSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         status = validated_data.pop('status')
         Animals = Animals.objects.create(**validated_data)
-        Animals.species.set(status)
+        Animals.status.set(AnimalStatusTag)
         Animals.save()
         return Animals
 

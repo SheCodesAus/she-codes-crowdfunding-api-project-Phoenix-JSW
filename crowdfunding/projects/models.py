@@ -7,11 +7,10 @@ from django.conf import global_settings, settings
 from django.contrib.auth import get_user_model
 from django.forms import CharField, SlugField, TimeField
 from django.utils.timezone import now
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.text import slugify
 
-# from users.models import Applicant
 
 user = get_user_model()
 
@@ -212,6 +211,8 @@ class Adopt(models.Model):
         return self.name
 
 class Support(models.Model):
+    time = models.IntegerField()
+    donation = models.CharField(max_length=200)
     user = models.OneToOneField(get_user_model(),
         on_delete=models.CASCADE,
         related_name="Support",
@@ -221,7 +222,11 @@ class Support(models.Model):
     end_date = models.DateTimeField('ending date')
     comment = models.CharField(max_length=200)
     done = models.BooleanField(default=False)
-
+    project = models.ForeignKey(
+        Project,
+        on_delete = models.CASCADE,
+        related_name = 'project_support'
+    )
     def __str__(self):
         return self.name
 
