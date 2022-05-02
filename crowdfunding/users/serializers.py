@@ -11,6 +11,8 @@ class CustomUserSerializer(serializers.Serializer):
     email = serializers.CharField(max_length=200)
     bio = serializers.CharField(max_length=200)
     applicant = serializers.BooleanField()
+    is_supporter = serializers.BooleanField(read_only=True)
+    is_owner = serializers.BooleanField(read_only=True)
 
     def create(self, validated_data):
           return CustomUser.objects.create(**validated_data)
