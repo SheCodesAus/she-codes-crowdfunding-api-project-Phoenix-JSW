@@ -1,7 +1,6 @@
 import string
 import random
 from datetime import datetime, timedelta
-from tkinter.tix import STATUS
 from django.db import models
 from django.conf import global_settings, settings
 from django.contrib.auth import get_user_model
