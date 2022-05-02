@@ -77,17 +77,17 @@ class Project(models.Model):
         related_name='animals',
         null=True
     )
-    status = models.ManyToManyField(
-        AnimalStatusTag,
-        related_name = "project",
-        related_query_name = "Projects"
-    )
+    # status = models.ManyToManyField(
+    #     AnimalStatusTag,
+    #     related_name = "project",
+    #     related_query_name = "Projects"
+    # )
 
     @property
     def is_open(self):
-        if self.pub_date is None:
-            return False
-        return (self.pub_date + timedelta(self.duration)) > now()
+        if self.end_date is None:
+            return True
+        return (self.end_date) > now()
     
     @property
     def tot_donated(self):

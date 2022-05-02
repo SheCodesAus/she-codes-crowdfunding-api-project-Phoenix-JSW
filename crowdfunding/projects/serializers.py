@@ -37,7 +37,7 @@ class ProjectSerializer(serializers.Serializer):
     description = serializers.CharField(max_length=200)
     goal = serializers.IntegerField()
     image = serializers.URLField()
-    is_open = serializers.BooleanField()
+    is_open = serializers.ReadOnlyField()
     date_created = serializers.DateTimeField()
     owner = serializers.ReadOnlyField(source='owner.id')
     # pledges = PledgeSerializer(many=True, read_only=True)
@@ -46,13 +46,11 @@ class ProjectSerializer(serializers.Serializer):
     animals = serializers.ReadOnlyField(source='owner.animals.name')
     animals_id = serializers.ReadOnlyField(source='owner.animals.id')
     is_approved = serializers.ReadOnlyField(source='owner.animals.is_approved')
-    status = serializers.SlugRelatedField(many=True, slug_field="animalstatus", queryset=AnimalStatusTag.objects.all())
+    # status = serializers.SlugRelatedField(many=True, slug_field="value", queryset=AnimalStatusTag.objects.all())
     pledges = PledgeSerializer(many=True, read_only=True)
 
     def create(self, validated_data):
-        status = validated_data.pop('status')
         project = Project.objects.create(**validated_data)
-        project.status.set(status)
         project.save()
         return project
 
@@ -133,7 +131,7 @@ class AnimalsSerializer(serializers.ModelSerializer):
     difficulty = IntegerField(min_value=0, required=True)
     description = CharField(max_length=1000, required=True)
     image = URLField()
-    status = serializers.SlugRelatedField(many=True, slug_field="animalstatus", queryset=AnimalStatusTag.objects.all())
+    status = serializers.SlugRelatedField(many=True, slug_field="value", queryset=AnimalStatusTag.objects.all())
     def create(self, validated_data):
         status = validated_data.pop('status')
         Animals = Animals.objects.create(**validated_data)
