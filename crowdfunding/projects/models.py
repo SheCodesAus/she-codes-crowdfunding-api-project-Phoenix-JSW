@@ -142,8 +142,6 @@ class AnimalGender(models.Model):
         verbose_name = 'Animal Gender'
         verbose_name_plural = 'Animal Gender'
 
-
-
 class Animals(models.Model):
     image = models.URLField()
     animal_name = models.CharField("Name", max_length=50)
