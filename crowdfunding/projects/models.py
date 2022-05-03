@@ -60,7 +60,11 @@ class Project(models.Model):
     is_open = models.BooleanField()
     date_created = models.DateTimeField(auto_now=True, blank=True)
     end_date = models.DateTimeField(null=True)
-    owner = models.CharField(max_length=200)
+    owner = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        related_name='owner_projects'
+    )
     category = models.ForeignKey(
         Category,
         on_delete=models.CASCADE,

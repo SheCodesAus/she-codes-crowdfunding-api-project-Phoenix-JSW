@@ -40,13 +40,11 @@ class ProjectSerializer(serializers.Serializer):
     is_open = serializers.ReadOnlyField()
     date_created = serializers.DateTimeField()
     owner = serializers.ReadOnlyField(source='owner.id')
-    # pledges = PledgeSerializer(many=True, read_only=True)
     end_date = serializers.DateTimeField()
     category = serializers.SlugRelatedField(slug_field="slug", queryset=Category.objects.all())
     animals = serializers.ReadOnlyField(source='owner.animals.name')
     animals_id = serializers.ReadOnlyField(source='owner.animals.id')
     is_approved = serializers.ReadOnlyField(source='owner.animals.is_approved')
-    # status = serializers.SlugRelatedField(many=True, slug_field="value", queryset=AnimalStatusTag.objects.all())
     pledges = PledgeSerializer(many=True, read_only=True)
 
     def create(self, validated_data):
