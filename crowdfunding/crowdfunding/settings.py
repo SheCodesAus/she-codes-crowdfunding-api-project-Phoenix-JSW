@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # SECRET_KEY = 'django-insecure-6f5fiv53l$d=%d_0_8&znvd!6&d3rfy-qowzswx^u)i-p_dsm6'
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY','5*15pt5log&-bjpkqo0117!b!x4do-mgmxvg8n$3016384zz(7')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY','!7gr@n%f25#fj@oby+ulrn=w0%%1g8+0s0h4h-917nq=jjgh')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = True
@@ -38,17 +38,23 @@ CORS_ALLOW_ALL_ORIGINS = True
 # Application definition
 
 INSTALLED_APPS = [
+
+#My Apps 
     'projects.apps.ProjectsConfig',
+    'users.apps.UsersConfig',
+    'corsheaders',
+    'fontawesomefree',
+
+#Django Apps
     'rest_framework',
     'rest_framework.authtoken',
-    # 'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'users.apps.UsersConfig',
+    
 ]
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -59,7 +65,7 @@ REST_FRAMEWORK = {
 AUTH_USER_MODEL = 'users.CustomUser'
 
 MIDDLEWARE = [
-    # 'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
