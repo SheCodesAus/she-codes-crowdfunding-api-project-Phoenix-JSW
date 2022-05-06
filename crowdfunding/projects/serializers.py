@@ -95,40 +95,18 @@ class AnimalSpeciesSerializer(ModelSerializer):
         model = AnimalSpecies
         fields = ['id', 'value']
 
-class AnimalBreedSerializer(ModelSerializer):
-    value = CharField(max_length=100, required=True, validators=[
-        UniqueValidator(queryset=AnimalBreed.objects.all())])
-
-    class Meta:
-        model = AnimalBreed
-        fields = ['id', 'value']
-
-class AnimalGenderSerializer(ModelSerializer):
-    value = CharField(max_length=100, required=True,  validators=[
-        UniqueValidator(queryset=AnimalGender.objects.all())])
-
-    class Meta:
-        model = AnimalGender
-        fields = ['id', 'value']
-
 
 class AnimalsSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField()
     animal_name = CharField(max_length=50, required=True)
     age = IntegerField(min_value=0, required=True)
-    animal_Species = AnimalSpeciesSerializer(read_only=True)
-    animal_Species_id = PrimaryKeyRelatedField(
-        source='animal_species', queryset=AnimalSpecies.objects.all(), required=True, write_only=True)
-    animal_breed = AnimalBreedSerializer(read_only=True)
-    animal_breed_id = PrimaryKeyRelatedField(
-        source='animal_breed', queryset=AnimalBreed.objects.all(), required=True, write_only=True)
-    animal_gender = AnimalGenderSerializer(read_only=True)
-    animal_gender_id = PrimaryKeyRelatedField(
-        source='animal_gender', queryset=AnimalGender.objects.all(), required=True, write_only=True)
-    color = CharField(max_length=500, required=True)
-    difficulty = IntegerField(min_value=0, required=True)
+    animal_species_id =serializers.SlugRelatedField(many=False, slug_field="value", queryset=AnimalSpecies.objects.all())
     description = CharField(max_length=1000, required=True)
+    breed = CharField(max_length=50, required=True)
+    gender = CharField(max_length=50, required=True)
     image = URLField()
+    location = serializers.CharField(max_length=100, required=True)
+    is_adopted = serializers.BooleanField()
     status = serializers.SlugRelatedField(many=True, slug_field="value", queryset=AnimalStatusTag.objects.all())
     def create(self, validated_data):
         status = validated_data.pop('status')
@@ -145,6 +123,10 @@ class AnimalsSerializer(serializers.ModelSerializer):
                 return ValidationError('Maximum number of attached images is 6')
 
         return super().validate(attrs)
+
+    class Meta:
+        model = AnimalSpecies
+        fields = '__all__'
 
 class AnimalsDetailSerializer(AnimalsSerializer):
 

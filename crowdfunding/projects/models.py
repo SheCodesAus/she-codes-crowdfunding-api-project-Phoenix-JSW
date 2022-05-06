@@ -2,7 +2,7 @@ import string
 import random
 from datetime import datetime, timedelta
 from django.db import models
-from django.conf import global_settings, settings
+from django.conf import global_settings
 from django.contrib.auth import get_user_model
 from django.forms import CharField, SlugField, TimeField
 from django.utils.timezone import now
@@ -72,7 +72,7 @@ class Project(models.Model):
         null=True
     )
     favourites = models.ManyToManyField(
-    settings.AUTH_USER_MODEL, related_name='project_favourites',
+    get_user_model(), related_name='project_favourites',
     through='Favourite'
     )
     animals = models.ForeignKey(
@@ -122,53 +122,17 @@ class AnimalSpecies(models.Model):
         verbose_name = 'Animal Species'
         verbose_name_plural = 'Animal species'
 
-class AnimalBreed(models.Model):
-    value = models.CharField("Value", max_length=100,unique=True, null=False)
-
-    def __str__(self):
-        return str(self.value)
-
-    class Meta:
-        verbose_name = 'Animal Breed'
-        verbose_name_plural = 'Animal Breeds'
-
-class AnimalGender(models.Model):
-    value = models.CharField("Value", max_length=20, unique=True, null=False)
-
-    def __str__(self):
-        return str(self.value)
-
-    class Meta:
-        verbose_name = 'Animal Gender'
-        verbose_name_plural = 'Animal Gender'
 
 class Animals(models.Model):
     image = models.URLField()
     animal_name = models.CharField("Name", max_length=50)
     animal_species = models.ForeignKey(AnimalSpecies, on_delete=models. PROTECT, verbose_name="Animal Species")
-    animal_breed = models.ForeignKey(AnimalBreed, on_delete=models. PROTECT, verbose_name="Animal Breed")
-    animal_gender = models.ForeignKey(AnimalGender, on_delete=models. PROTECT, verbose_name="Animal Gender")
-    color = models.CharField("Color", max_length=500,help_text="Describe a Color")
+    breed = models.CharField("breed", max_length=50)
+    gender = models.CharField("gender", max_length=50)
     description = models.TextField("description", max_length=1000, help_text="Describe the Animals Personality", null=True)
-    difficulty = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     age = models. PositiveSmallIntegerField("Full Years")
-    bonded = models.BooleanField()
-    slug = models.SlugField(max_length=255, unique=True)
-    desexed = models.BooleanField()
-    is_sheltered = models.BooleanField()
-    is_fostered = models.BooleanField()
+    location = models.CharField("Name", max_length=100)
     is_adopted = models.BooleanField()
-    adopt = models.BooleanField()
-    foster = models.BooleanField()
-    support = models.BooleanField()
-    goal = models.IntegerField()
-    is_published = models.BooleanField(default=False)
-    category = models.ForeignKey(
-        Category,
-        on_delete=models.CASCADE,
-        related_name='animals',
-        null=True
-    )
     status = models.ManyToManyField(
         AnimalStatusTag,
         related_name = "animals",
@@ -226,7 +190,7 @@ class Support(models.Model):
 
 class Favourite(models.Model):
     owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        get_user_model(),
         on_delete = models.CASCADE,
         related_name = 'owner_favourites',
     )

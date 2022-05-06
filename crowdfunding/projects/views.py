@@ -2,13 +2,10 @@ from pdb import post_mortem
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
-from .models import AnimalBreed, AnimalGender, AnimalSpecies,  Project
 from django.http import Http404
 from rest_framework import status, permissions, generics, filters, status
-from .models import Project, Pledge, Category, Comments, Favourite, Animals, AnimalBreed, AnimalGender,  AnimalSpecies, AnimalStatusTag
+from .models import Project, Pledge, Category, Comments, Favourite, Animals, AnimalSpecies, AnimalStatusTag
 from .serializers import (
-    AnimalBreedSerializer,
-    AnimalGenderSerializer,
     AnimalSpeciesSerializer,
     AnimalsSerializer,
     AnimalsDetailSerializer,
@@ -132,7 +129,7 @@ class AnimalsList(APIView):
     # Create Animal, get list of animals
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     def get(self, request):
-        animals = animals.objects.all()
+        animals = Animals.objects.all()
         serializer = AnimalsSerializer(animals, many=True)
         return Response(serializer.data)
 
@@ -203,22 +200,7 @@ class AnimalSpeciesView(generics.ListCreateAPIView):
         return get_shared_permissions(self.action)
 
 
-class AnimalGenderView(generics.ListCreateAPIView):
-    queryset = AnimalGender.objects.all()
-    serializer_class = AnimalGenderSerializer
-
-    def get_permissions(self):
-        return get_shared_permissions(self.action)
-
-
-class AnimalBreedView(generics.ListCreateAPIView):
-    queryset = AnimalBreed.objects.all()
-    serializer_class = AnimalBreedSerializer
-
-    def get_permissions(self):
-        return get_shared_permissions(self.action)
-
-class AnimalStatusTag(APIView):
+class AnimalStatusTagList(APIView):
     # Create pet category, return list of all categories
     
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
@@ -239,6 +221,29 @@ class AnimalStatusTag(APIView):
     def get(self, request):
         animals = AnimalStatusTag.objects.all()
         serializer = AnimalStatusTagSerializer(animals, many=True)
+        return Response(serializer.data)
+
+class AnimalSpeciesList(APIView):
+    # Create pet category, return list of all categories
+    
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def post(self, request):
+        serializer = AnimalSpeciesSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    def get(self, request):
+        animals = AnimalSpecies.objects.all()
+        serializer = AnimalSpeciesSerializer(animals, many=True)
         return Response(serializer.data)
 
 
