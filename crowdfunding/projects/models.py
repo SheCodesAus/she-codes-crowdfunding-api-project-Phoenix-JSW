@@ -100,6 +100,7 @@ class Project(models.Model):
 
 class Pledge(models.Model):
     amount = models.IntegerField()
+    comments = models.CharField(max_length=200)
     anonymous = models.BooleanField()
     project = models.ForeignKey(
         'Project',

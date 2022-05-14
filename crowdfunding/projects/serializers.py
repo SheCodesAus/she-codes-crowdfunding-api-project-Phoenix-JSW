@@ -19,7 +19,7 @@ class CommentsSerializer(serializers.ModelSerializer):
 class PledgeSerializer(serializers.Serializer):
     id = serializers.ReadOnlyField()
     amount = serializers.IntegerField()
-    comment = serializers.CharField(max_length=200)
+    comments = serializers.CharField(max_length=200)
     anonymous = serializers.BooleanField()
     supporter = serializers.SlugRelatedField(
         slug_field='username',
