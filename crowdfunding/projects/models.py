@@ -117,7 +117,7 @@ class AnimalSpecies(models.Model):
     value = models.CharField("Value", max_length=100,unique=True, null=False)
 
     def __str__(self):
-        return str(self.value)
+        return (self.value)
 
     class Meta:
         verbose_name = 'Animal Species'

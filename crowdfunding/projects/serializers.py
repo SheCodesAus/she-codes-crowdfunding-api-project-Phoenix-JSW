@@ -7,6 +7,13 @@ from .models import *
 
 User = get_user_model()
 
+class AnimalStatusTagSerializer(serializers.Serializer):
+    id = serializers.ReadOnlyField()
+    value = serializers.CharField(max_length=200)
+
+    def create(self, validated_data):
+        return AnimalStatusTag.objects.create(**validated_data)
+
 class CommentsSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         slug_field="username",
@@ -100,7 +107,7 @@ class AnimalsSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField()
     animal_name = CharField(max_length=50, required=True)
     age = IntegerField(min_value=0, required=True)
-    animal_species_id =serializers.SlugRelatedField(many=False, slug_field="value", queryset=AnimalSpecies.objects.all())
+    animal_species =serializers.SlugRelatedField(many=False, slug_field="value", queryset=AnimalSpecies.objects.all())
     description = CharField(max_length=1000, required=True)
     breed = CharField(max_length=50, required=True)
     gender = CharField(max_length=50, required=True)
@@ -145,9 +152,3 @@ class AnimalsDetailSerializer(AnimalsSerializer):
         instance.save()
         return instance
 
-class AnimalStatusTagSerializer(serializers.Serializer):
-    id = serializers.ReadOnlyField()
-    value = serializers.CharField(max_length=200)
-
-    def create(self, validated_data):
-        return AnimalStatusTag.objects.create(**validated_data)
